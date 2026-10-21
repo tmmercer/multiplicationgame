@@ -54,15 +54,12 @@
   .btn.small { flex: 0 0 auto; min-width: 0; font-size: 18px; padding: 10px 16px; box-shadow: 0 3px 0 #4a5ca8; }
   .btn.small:active { box-shadow: 0 1px 0 #4a5ca8; }
   .field {
-    width: 100%; font-size: 22px; padding: 16px; border-radius: 16px; border: 3px solid #d8dcf0;
-    margin-bottom: 12px; font-family: inherit; user-select: text; -webkit-user-select: text;
+    width: 100%; font-size: 24px; padding: 16px; border-radius: 16px; border: 3px solid #d8dcf0;
+    margin-bottom: 14px; font-family: inherit; user-select: text; -webkit-user-select: text;
+    display: block;
   }
-  .msg { font-size: 18px; min-height: 24px; margin-top: 10px; color: var(--bad); text-align: center; }
+  .msg { font-size: 19px; min-height: 26px; margin-top: 8px; color: var(--bad); text-align: center; }
   .msg.ok { color: var(--good); }
-  .childbtn {
-    width: 100%; font-size: 26px; font-weight: 700; padding: 20px; border-radius: 18px; border: 3px solid #d8dcf0;
-    background: #f4f6ff; color: var(--ink); cursor: pointer; margin-bottom: 12px; text-align: left;
-  }
   .topbar {
     width: 100%; max-width: 640px; display: flex; justify-content: space-between; align-items: center;
     color: #cfd6f5; font-size: 18px; margin-bottom: 8px;
@@ -107,8 +104,10 @@
   .toggle-row { display: flex; gap: 12px; margin-top: 18px; }
   .toggle { flex: 1; font-size: 22px; font-weight: 700; padding: 16px; border-radius: 16px; border: 3px solid #d8dcf0; background: #f4f6ff; cursor: pointer; text-align: center; color: var(--ink); }
   .toggle.on { background: #6c7fd6; border-color: #6c7fd6; color: #fff; }
+  .chip-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 12px; }
   .best { color: #cfd6f5; font-size: 20px; margin-top: 14px; text-align: center; }
   .hint { color: #cfd6f5; font-size: 18px; margin-top: 12px; text-align: center; }
+  .link { background: none; border: none; color: #cfd6f5; font-size: 19px; text-decoration: underline; cursor: pointer; margin-top: 16px; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -116,51 +115,40 @@
 <!-- ============ SIGN IN ============ -->
 <section id="auth" class="screen active">
   <h1>Times Tables</h1>
-  <div class="sub">Parents: sign in to save your child's progress</div>
+  <div class="sub" id="authSub">Log in with your username</div>
   <div class="card">
-    <h2 id="authTitle">Sign in</h2>
-    <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
-    <input class="field" id="password" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
-    <div class="row">
-      <button class="btn" id="signinBtn">Sign in</button>
-      <button class="btn alt" id="signupBtn">Create account</button>
+    <h2 id="authTitle">Log in</h2>
+    <div id="nameField" style="display:none">
+      <input class="field" id="displayName" maxlength="40" placeholder="Your first name" autocomplete="off" autocapitalize="words">
+    </div>
+    <input class="field" id="username" maxlength="20" placeholder="Username" autocapitalize="none" autocorrect="off" autocomplete="username">
+    <input class="field" id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <div class="row" style="margin-top:6px">
+      <button class="btn" id="authActionBtn">Log in</button>
     </div>
     <div class="msg" id="authMsg"></div>
-  </div>
-  <div class="row">
-    <button class="btn alt" id="guestBtn">Play without an account</button>
-  </div>
-  <div class="hint">Guest play works fine, but progress isn't saved.</div>
-</section>
-
-<!-- ============ CHILD PICKER ============ -->
-<section id="children" class="screen">
-  <h1>Who's playing?</h1>
-  <div class="card">
-    <div id="childList"></div>
-    <input class="field" id="newChildName" maxlength="40" placeholder="Add a child's name">
-    <div class="row" style="margin-top:0">
-      <button class="btn alt" id="addChildBtn">Add child</button>
+    <div style="text-align:center">
+      <button class="link" id="toggleModeBtn">New here? Create a username</button>
     </div>
-    <div class="msg" id="childMsg"></div>
   </div>
   <div class="row">
-    <button class="btn alt" id="signOutBtn">Sign out</button>
+    <button class="btn alt" id="guestBtn">Play without saving</button>
   </div>
+  <div class="hint">Usernames: 3–20 letters, numbers, or _. Passwords: at least 4 characters.</div>
 </section>
 
 <!-- ============ MENU ============ -->
 <section id="menu" class="screen">
   <div class="topbar">
     <span id="whoLabel"></span>
-    <button class="btn small alt" id="switchBtn">Switch</button>
+    <button class="btn small alt" id="logoutBtn">Log out</button>
   </div>
   <h1>Times Tables</h1>
   <div class="sub">Pick your tables, then tap Start!</div>
 
   <div class="card">
     <h2>Which tables?</h2>
-    <div class="tables" id="tableChoices"></div>
+    <div class="chip-row" id="tableChoices"></div>
     <div class="row" style="margin-top:14px">
       <button class="btn alt" id="allBtn">All 2–12</button>
       <button class="btn alt" id="clearBtn">Clear</button>
@@ -227,18 +215,20 @@
 (() => {
   // ---------- Supabase ----------
   const SUPABASE_URL = 'https://otoypxqbgtqyhgzryfpu.supabase.co';
-  // Publishable key is safe to ship in the browser. Row Level Security protects the data.
+  // Publishable key is safe in the browser. The database functions enforce access.
   const SUPABASE_KEY = 'sb_publishable_pCAZYtA_a_gXjwNhLSarXQ_-IQmDJyI';
   const sb = (window.supabase && window.supabase.createClient)
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } })
     : null;
+  const TOKEN_KEY = 'tt-session-token';
 
   // ---------- State ----------
   const ALL_TABLES = [2,3,4,5,6,7,8,9,10,11,12];
   const TIME_LIMIT = 8; // seconds in timed mode
   const state = {
-    user: null,           // signed-in parent, or null for guest
-    child: null,          // { id, name } or null (guest / not saved)
+    token: null,          // session token for a logged-in child, or null for guest
+    child: null,          // { name, username } or null
+    authMode: 'login',    // 'login' or 'signup'
     tables: new Set(ALL_TABLES),
     total: 20,
     timed: false,
@@ -255,7 +245,7 @@
   };
 
   const $ = id => document.getElementById(id);
-  const SCREENS = ['auth','children','menu','game','results'];
+  const SCREENS = ['auth','menu','game','results'];
   function show(name) {
     SCREENS.forEach(s => $(s).classList.toggle('active', s === name));
   }
@@ -265,83 +255,85 @@
   }
 
   // ---------- Auth ----------
-  async function signIn() {
-    if (!sb) return setMsg($('authMsg'), 'Could not reach the server. Try again or play as a guest.');
-    const email = $('email').value.trim();
-    const password = $('password').value;
-    setMsg($('authMsg'), 'Signing in…', true);
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) return setMsg($('authMsg'), error.message);
-    state.user = data.user;
-    goToChildren();
-  }
-
-  async function signUp() {
-    if (!sb) return setMsg($('authMsg'), 'Could not reach the server. Try again or play as a guest.');
-    const email = $('email').value.trim();
-    const password = $('password').value;
-    setMsg($('authMsg'), 'Creating account…', true);
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) return setMsg($('authMsg'), error.message);
-    if (data.session) {
-      state.user = data.user;
-      goToChildren();
-    } else {
-      setMsg($('authMsg'), 'Check your email to confirm your account, then sign in.', true);
-    }
-  }
-
-  async function signOut() {
-    if (sb) await sb.auth.signOut();
-    state.user = null;
-    state.child = null;
-    $('password').value = '';
+  function setAuthMode(mode) {
+    state.authMode = mode;
+    const signup = mode === 'signup';
+    $('nameField').style.display = signup ? 'block' : 'none';
+    $('authTitle').textContent = signup ? 'Create your account' : 'Log in';
+    $('authActionBtn').textContent = signup ? 'Create account' : 'Log in';
+    $('authSub').textContent = signup ? 'Pick a username and password you can remember' : 'Log in with your username';
+    $('toggleModeBtn').textContent = signup ? 'Already have an account? Log in' : 'New here? Create a username';
+    $('password').autocomplete = signup ? 'new-password' : 'current-password';
     setMsg($('authMsg'), '');
+  }
+
+  async function submitAuth() {
+    if (!sb) return setMsg($('authMsg'), 'Could not reach the server. You can still play without saving.');
+    const username = $('username').value.trim();
+    const password = $('password').value;
+    const name = $('displayName').value.trim();
+    if (!username || !password) return setMsg($('authMsg'), 'Enter your username and password.');
+    if (state.authMode === 'signup' && !name) return setMsg($('authMsg'), 'Enter your first name.');
+
+    setMsg($('authMsg'), state.authMode === 'signup' ? 'Creating account…' : 'Logging in…', true);
+    const fn = state.authMode === 'signup' ? 'register_child' : 'login_child';
+    const args = state.authMode === 'signup'
+      ? { p_username: username, p_password: password, p_display_name: name }
+      : { p_username: username, p_password: password };
+    const { data, error } = await sb.rpc(fn, args);
+    if (error) return setMsg($('authMsg'), cleanError(error.message));
+
+    saveSession(data.token);
+    state.child = { name: data.name, username: data.username };
+    $('password').value = '';
+    goToMenu();
+  }
+
+  function cleanError(msg) {
+    // Strip the database's own wording down to what the player should see
+    return (msg || 'Something went wrong. Try again.').replace(/^ERROR:\s*/i, '');
+  }
+
+  function saveSession(token) {
+    state.token = token;
+    try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+  }
+
+  function clearSession() {
+    state.token = null;
+    state.child = null;
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  }
+
+  async function logout() {
+    if (sb && state.token) {
+      await sb.rpc('logout_child', { p_token: state.token });
+    }
+    clearSession();
+    $('username').value = '';
+    $('password').value = '';
+    setAuthMode('login');
     show('auth');
   }
 
   function playAsGuest() {
-    state.user = null;
-    state.child = null;
+    clearSession();
     goToMenu();
   }
 
-  // ---------- Children ----------
-  async function goToChildren() {
-    show('children');
-    await loadChildren();
-  }
-
-  async function loadChildren() {
-    const list = $('childList');
-    list.innerHTML = '';
-    setMsg($('childMsg'), '');
-    const { data, error } = await sb.from('children').select('id,name').order('created_at');
-    if (error) return setMsg($('childMsg'), error.message);
-    if (!data.length) {
-      setMsg($('childMsg'), 'Add a child to get started.', true);
+  // Restore a saved login on load
+  async function restoreSession() {
+    let token = null;
+    try { token = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+    if (!token || !sb) return false;
+    const { data, error } = await sb.rpc('me_child', { p_token: token });
+    if (error || !data) {
+      try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+      return false;
     }
-    data.forEach(c => {
-      const b = document.createElement('button');
-      b.className = 'childbtn';
-      b.textContent = c.name;
-      b.addEventListener('click', () => selectChild(c));
-      list.appendChild(b);
-    });
-  }
-
-  async function addChild() {
-    const name = $('newChildName').value.trim();
-    if (!name) return setMsg($('childMsg'), 'Type a name first.');
-    const { data, error } = await sb.from('children').insert({ name }).select('id,name').single();
-    if (error) return setMsg($('childMsg'), error.message);
-    $('newChildName').value = '';
-    selectChild(data);
-  }
-
-  function selectChild(child) {
-    state.child = child;
-    goToMenu();
+    state.token = token;
+    state.child = { name: data.name, username: data.username };
+    return true;
   }
 
   // ---------- Menu ----------
@@ -349,7 +341,7 @@
     $('whoLabel').textContent = state.child
       ? `Playing: ${state.child.name}`
       : 'Guest (progress not saved)';
-    $('switchBtn').textContent = state.user ? 'Switch child' : 'Sign in';
+    $('logoutBtn').textContent = state.child ? 'Log out' : 'Log in';
     show('menu');
     renderTables();
     updateStartButton();
@@ -390,7 +382,7 @@
   selectGroup('modeChoices', 'm', v => state.timed = (v === 'timed'));
 
   function bestKey() {
-    return 'tt-best-' + (state.child ? state.child.id : 'guest') + '-' +
+    return 'tt-best-' + (state.child ? state.child.username : 'guest') + '-' +
       [...state.tables].sort((a,b)=>a-b).join(',') + '-' + state.total + (state.timed ? '-t' : '');
   }
   function getBest() {
@@ -409,13 +401,11 @@
 
   async function loadFactStats() {
     state.factStats = {};
-    if (!state.child || !sb) {
+    if (!state.token || !sb) {
       $('practiceHint').textContent = '';
       return;
     }
-    const { data, error } = await sb.from('fact_stats')
-      .select('factor_a,factor_b,total,misses')
-      .eq('child_id', state.child.id);
+    const { data, error } = await sb.rpc('get_fact_stats', { p_token: state.token });
     if (error) {
       $('practiceHint').textContent = 'Could not load past results. Playing with random practice.';
       return;
@@ -430,13 +420,13 @@
     const tracked = Object.keys(state.factStats).length;
     $('practiceHint').textContent = tracked
       ? `Practice focuses on the facts ${state.child.name} misses most.`
-      : `Answers will be saved so the game can focus on tricky facts.`;
+      : 'Answers are saved, so practice will focus on tricky facts over time.';
   }
 
   // Higher weight = asked more often
   function weightFor(key) {
     const s = state.factStats[key];
-    if (!s) return 2;                       // never tried: keep it in the mix
+    if (!s) return 2;                               // never tried: keep it in the mix
     if (s.total >= 3 && s.misses === 0) return 0.4; // reliably known
     return 1 + s.misses * 2 + (s.misses / s.total) * 4;
   }
@@ -471,13 +461,13 @@
 
   // ---------- Saving answers ----------
   function recordAttempt(a, b, correct, responseMs) {
-    if (!state.child || !sb) return;
-    sb.from('attempts').insert({
-      child_id: state.child.id,
-      factor_a: a,
-      factor_b: b,
-      correct,
-      response_ms: responseMs,
+    if (!state.token || !sb) return;
+    sb.rpc('record_attempt', {
+      p_token: state.token,
+      p_a: a,
+      p_b: b,
+      p_correct: correct,
+      p_ms: responseMs,
     }).then(({ error }) => {
       if (error) console.warn('Could not save answer:', error.message);
     });
@@ -668,16 +658,14 @@
   }
 
   // ---------- Wire up buttons ----------
-  $('signinBtn').addEventListener('click', signIn);
-  $('signupBtn').addEventListener('click', signUp);
+  $('authActionBtn').addEventListener('click', submitAuth);
+  $('password').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
+  $('username').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
+  $('toggleModeBtn').addEventListener('click', () => setAuthMode(state.authMode === 'login' ? 'signup' : 'login'));
   $('guestBtn').addEventListener('click', playAsGuest);
-  $('password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
-  $('addChildBtn').addEventListener('click', addChild);
-  $('newChildName').addEventListener('keydown', e => { if (e.key === 'Enter') addChild(); });
-  $('signOutBtn').addEventListener('click', signOut);
-  $('switchBtn').addEventListener('click', () => {
-    if (state.user) goToChildren();
-    else show('auth');
+  $('logoutBtn').addEventListener('click', () => {
+    if (state.child) logout();
+    else { setAuthMode('login'); show('auth'); }
   });
   $('allBtn').addEventListener('click', () => { state.tables = new Set(ALL_TABLES); renderTables(); updateStartButton(); });
   $('clearBtn').addEventListener('click', () => { state.tables.clear(); renderTables(); updateStartButton(); });
@@ -692,13 +680,11 @@
 
   (async () => {
     if (!sb) {
-      setMsg($('authMsg'), 'Could not load the account service. You can still play as a guest.');
+      setMsg($('authMsg'), 'Could not load the account service. You can still play without saving.');
       return;
     }
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      state.user = session.user;
-      goToChildren();
+    if (await restoreSession()) {
+      goToMenu();
     }
   })();
 })();
