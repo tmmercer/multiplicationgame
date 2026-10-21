@@ -19,14 +19,14 @@
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
-    margin: 0; height: 100%;
+    margin: 0; min-height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     background: radial-gradient(circle at top, #2c3d75, var(--bg) 70%);
     color: var(--ink);
     overscroll-behavior: none;
     user-select: none; -webkit-user-select: none;
   }
-  .screen { display: none; min-height: 100%; padding: 24px; flex-direction: column; align-items: center; }
+  .screen { display: none; min-height: 100vh; padding: 24px; flex-direction: column; align-items: center; }
   .screen.active { display: flex; }
   h1 { color: #fff; font-size: 44px; margin: 16px 0 8px; text-align: center; }
   .sub { color: #cfd6f5; font-size: 20px; margin-bottom: 24px; text-align: center; }
@@ -41,21 +41,38 @@
     background: #f4f6ff; color: var(--ink); cursor: pointer; text-align: center;
   }
   .chip.on { background: var(--good); border-color: var(--good); color: #fff; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; width: 100%; max-width: 640px; }
   .btn {
     flex: 1; min-width: 180px; font-size: 28px; font-weight: 800; padding: 22px 24px;
     border: none; border-radius: 22px; background: var(--accent); color: #fff; cursor: pointer;
     box-shadow: 0 6px 0 #c9553a; transition: transform .05s;
   }
   .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9553a; }
+  .btn:disabled { opacity: .5; }
   .btn.alt { background: #6c7fd6; box-shadow: 0 6px 0 #4a5ca8; }
   .btn.alt:active { box-shadow: 0 2px 0 #4a5ca8; }
+  .btn.small { flex: 0 0 auto; min-width: 0; font-size: 18px; padding: 10px 16px; box-shadow: 0 3px 0 #4a5ca8; }
+  .btn.small:active { box-shadow: 0 1px 0 #4a5ca8; }
+  .field {
+    width: 100%; font-size: 22px; padding: 16px; border-radius: 16px; border: 3px solid #d8dcf0;
+    margin-bottom: 12px; font-family: inherit; user-select: text; -webkit-user-select: text;
+  }
+  .msg { font-size: 18px; min-height: 24px; margin-top: 10px; color: var(--bad); text-align: center; }
+  .msg.ok { color: var(--good); }
+  .childbtn {
+    width: 100%; font-size: 26px; font-weight: 700; padding: 20px; border-radius: 18px; border: 3px solid #d8dcf0;
+    background: #f4f6ff; color: var(--ink); cursor: pointer; margin-bottom: 12px; text-align: left;
+  }
+  .topbar {
+    width: 100%; max-width: 640px; display: flex; justify-content: space-between; align-items: center;
+    color: #cfd6f5; font-size: 18px; margin-bottom: 8px;
+  }
   .stats { color: #fff; display: flex; justify-content: space-between; width: 100%; max-width: 640px; margin-bottom: 12px; font-size: 22px; font-weight: 700; }
   .progress { width: 100%; max-width: 640px; height: 14px; background: rgba(255,255,255,.2); border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
   .progress > div { height: 100%; background: var(--gold); width: 0; transition: width .3s; }
   .question {
     width: 100%; max-width: 640px; background: var(--card); border-radius: 28px; padding: 24px 20px;
-    text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.25); transition: transform .2s;
+    text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.25);
   }
   .question.shake { animation: shake .4s; }
   .question.pop { animation: pop .4s; }
@@ -72,16 +89,14 @@
   .feedback { min-height: 32px; font-size: 26px; font-weight: 700; margin-top: 10px; }
   .feedback.good { color: var(--good); }
   .feedback.bad { color: var(--bad); }
-  .keypad {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    width: 100%; max-width: 640px; margin-top: 18px;
-  }
+  .timerbar { height: 10px; border-radius: 6px; background: #e5e9f7; margin-top: 10px; overflow: hidden; display: none; }
+  .timerbar > div { height: 100%; width: 100%; background: var(--accent); }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 640px; margin-top: 18px; }
   .key {
     font-size: 40px; font-weight: 800; padding: 20px 0; border: none; border-radius: 20px;
     background: var(--key); color: #fff; cursor: pointer; box-shadow: 0 5px 0 #26335f;
   }
   .key:active { transform: translateY(3px); box-shadow: 0 2px 0 #26335f; }
-  .key.wide { grid-column: span 2; }
   .key.action { background: var(--good); box-shadow: 0 5px 0 #2a8a5a; }
   .key.clear { background: #8a7bd6; box-shadow: 0 5px 0 #5f52a3; }
   .result { text-align: center; color: #fff; }
@@ -89,24 +104,64 @@
   .result .score { font-size: 60px; font-weight: 800; color: var(--gold); margin: 6px 0; }
   .result p { font-size: 24px; }
   .stars { font-size: 70px; letter-spacing: 6px; }
-  .toggle-row { display:flex; gap:12px; margin-top: 18px; }
-  .toggle { flex:1; font-size:22px; font-weight:700; padding:16px; border-radius:16px; border:3px solid #d8dcf0; background:#f4f6ff; cursor:pointer; text-align:center; color: var(--ink); }
-  .toggle.on { background: #6c7fd6; border-color: #6c7fd6; color:#fff; }
-  .best { color:#cfd6f5; font-size:20px; margin-top: 14px; text-align:center; }
-  .hint { color:#cfd6f5; font-size:18px; margin-top:12px; text-align:center; }
+  .toggle-row { display: flex; gap: 12px; margin-top: 18px; }
+  .toggle { flex: 1; font-size: 22px; font-weight: 700; padding: 16px; border-radius: 16px; border: 3px solid #d8dcf0; background: #f4f6ff; cursor: pointer; text-align: center; color: var(--ink); }
+  .toggle.on { background: #6c7fd6; border-color: #6c7fd6; color: #fff; }
+  .best { color: #cfd6f5; font-size: 20px; margin-top: 14px; text-align: center; }
+  .hint { color: #cfd6f5; font-size: 18px; margin-top: 12px; text-align: center; }
 </style>
 </head>
 <body>
 
+<!-- ============ SIGN IN ============ -->
+<section id="auth" class="screen active">
+  <h1>Times Tables</h1>
+  <div class="sub">Parents: sign in to save your child's progress</div>
+  <div class="card">
+    <h2 id="authTitle">Sign in</h2>
+    <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
+    <input class="field" id="password" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+    <div class="row">
+      <button class="btn" id="signinBtn">Sign in</button>
+      <button class="btn alt" id="signupBtn">Create account</button>
+    </div>
+    <div class="msg" id="authMsg"></div>
+  </div>
+  <div class="row">
+    <button class="btn alt" id="guestBtn">Play without an account</button>
+  </div>
+  <div class="hint">Guest play works fine, but progress isn't saved.</div>
+</section>
+
+<!-- ============ CHILD PICKER ============ -->
+<section id="children" class="screen">
+  <h1>Who's playing?</h1>
+  <div class="card">
+    <div id="childList"></div>
+    <input class="field" id="newChildName" maxlength="40" placeholder="Add a child's name">
+    <div class="row" style="margin-top:0">
+      <button class="btn alt" id="addChildBtn">Add child</button>
+    </div>
+    <div class="msg" id="childMsg"></div>
+  </div>
+  <div class="row">
+    <button class="btn alt" id="signOutBtn">Sign out</button>
+  </div>
+</section>
+
 <!-- ============ MENU ============ -->
-<section id="menu" class="screen active">
+<section id="menu" class="screen">
+  <div class="topbar">
+    <span id="whoLabel"></span>
+    <button class="btn small alt" id="switchBtn">Switch</button>
+  </div>
   <h1>Times Tables</h1>
   <div class="sub">Pick your tables, then tap Start!</div>
 
   <div class="card">
     <h2>Which tables?</h2>
     <div class="tables" id="tableChoices"></div>
-    <div class="row">
+    <div class="row" style="margin-top:14px">
       <button class="btn alt" id="allBtn">All 2–12</button>
       <button class="btn alt" id="clearBtn">Clear</button>
     </div>
@@ -125,11 +180,11 @@
     </div>
   </div>
 
-  <div class="row" style="max-width:640px;width:100%">
+  <div class="row">
     <button class="btn" id="startBtn">Start!</button>
   </div>
   <div class="best" id="bestLine"></div>
-  <div class="hint">Tip: Add to Home Screen from Safari to play full-screen.</div>
+  <div class="hint" id="practiceHint"></div>
 </section>
 
 <!-- ============ GAME ============ -->
@@ -145,9 +200,7 @@
     <div class="prompt" id="prompt">7 × 8</div>
     <div class="answer-box" id="answerBox"></div>
     <div class="feedback" id="feedback"></div>
-    <div id="timerBar" style="height:10px;border-radius:6px;background:#e5e9f7;margin-top:10px;overflow:hidden;display:none">
-      <div id="timerFill" style="height:100%;width:100%;background:var(--accent)"></div>
-    </div>
+    <div class="timerbar" id="timerBar"><div id="timerFill"></div></div>
   </div>
 
   <div class="keypad" id="keypad"></div>
@@ -163,20 +216,33 @@
     <p id="resultMsg"></p>
     <p id="bestResult"></p>
   </div>
-  <div class="row" style="max-width:640px;width:100%">
+  <div class="row">
     <button class="btn" id="againBtn">Play again</button>
     <button class="btn alt" id="menuBtn">Change tables</button>
   </div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
+  // ---------- Supabase ----------
+  const SUPABASE_URL = 'https://otoypxqbgtqyhgzryfpu.supabase.co';
+  // Publishable key is safe to ship in the browser. Row Level Security protects the data.
+  const SUPABASE_KEY = 'sb_publishable_pCAZYtA_a_gXjwNhLSarXQ_-IQmDJyI';
+  const sb = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
+
   // ---------- State ----------
   const ALL_TABLES = [2,3,4,5,6,7,8,9,10,11,12];
+  const TIME_LIMIT = 8; // seconds in timed mode
   const state = {
-    tables: new Set([2,3,4,5,6,7,8,9,10,11,12]),
+    user: null,           // signed-in parent, or null for guest
+    child: null,          // { id, name } or null (guest / not saved)
+    tables: new Set(ALL_TABLES),
     total: 20,
     timed: false,
+    factStats: {},        // "2x7" -> { total, misses }
     questions: [],
     index: 0,
     score: 0,
@@ -185,17 +251,112 @@
     answer: '',
     locked: false,
     timer: null,
-    timeLeft: 0,
+    questionStart: 0,
   };
-  const TIME_LIMIT = 8; // seconds in timed mode
-  const $ = id => document.getElementById(id);
-  const screens = ['menu','game','results'];
 
+  const $ = id => document.getElementById(id);
+  const SCREENS = ['auth','children','menu','game','results'];
   function show(name) {
-    screens.forEach(s => $(s).classList.toggle('active', s === name));
+    SCREENS.forEach(s => $(s).classList.toggle('active', s === name));
+  }
+  function setMsg(el, text, ok) {
+    el.textContent = text;
+    el.classList.toggle('ok', !!ok);
+  }
+
+  // ---------- Auth ----------
+  async function signIn() {
+    if (!sb) return setMsg($('authMsg'), 'Could not reach the server. Try again or play as a guest.');
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    setMsg($('authMsg'), 'Signing in…', true);
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return setMsg($('authMsg'), error.message);
+    state.user = data.user;
+    goToChildren();
+  }
+
+  async function signUp() {
+    if (!sb) return setMsg($('authMsg'), 'Could not reach the server. Try again or play as a guest.');
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    setMsg($('authMsg'), 'Creating account…', true);
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) return setMsg($('authMsg'), error.message);
+    if (data.session) {
+      state.user = data.user;
+      goToChildren();
+    } else {
+      setMsg($('authMsg'), 'Check your email to confirm your account, then sign in.', true);
+    }
+  }
+
+  async function signOut() {
+    if (sb) await sb.auth.signOut();
+    state.user = null;
+    state.child = null;
+    $('password').value = '';
+    setMsg($('authMsg'), '');
+    show('auth');
+  }
+
+  function playAsGuest() {
+    state.user = null;
+    state.child = null;
+    goToMenu();
+  }
+
+  // ---------- Children ----------
+  async function goToChildren() {
+    show('children');
+    await loadChildren();
+  }
+
+  async function loadChildren() {
+    const list = $('childList');
+    list.innerHTML = '';
+    setMsg($('childMsg'), '');
+    const { data, error } = await sb.from('children').select('id,name').order('created_at');
+    if (error) return setMsg($('childMsg'), error.message);
+    if (!data.length) {
+      setMsg($('childMsg'), 'Add a child to get started.', true);
+    }
+    data.forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'childbtn';
+      b.textContent = c.name;
+      b.addEventListener('click', () => selectChild(c));
+      list.appendChild(b);
+    });
+  }
+
+  async function addChild() {
+    const name = $('newChildName').value.trim();
+    if (!name) return setMsg($('childMsg'), 'Type a name first.');
+    const { data, error } = await sb.from('children').insert({ name }).select('id,name').single();
+    if (error) return setMsg($('childMsg'), error.message);
+    $('newChildName').value = '';
+    selectChild(data);
+  }
+
+  function selectChild(child) {
+    state.child = child;
+    goToMenu();
   }
 
   // ---------- Menu ----------
+  async function goToMenu() {
+    $('whoLabel').textContent = state.child
+      ? `Playing: ${state.child.name}`
+      : 'Guest (progress not saved)';
+    $('switchBtn').textContent = state.user ? 'Switch child' : 'Sign in';
+    show('menu');
+    renderTables();
+    updateStartButton();
+    renderBest();
+    await loadFactStats();
+  }
+
   function renderTables() {
     const box = $('tableChoices');
     box.innerHTML = '';
@@ -214,7 +375,6 @@
 
   function updateStartButton() {
     $('startBtn').disabled = state.tables.size === 0;
-    $('startBtn').style.opacity = state.tables.size === 0 ? .5 : 1;
   }
 
   function selectGroup(containerId, attr, onPick) {
@@ -226,18 +386,12 @@
       });
     });
   }
-
   selectGroup('lengthChoices', 'n', v => state.total = parseInt(v, 10));
   selectGroup('modeChoices', 'm', v => state.timed = (v === 'timed'));
 
-  $('allBtn').addEventListener('click', () => { state.tables = new Set(ALL_TABLES); renderTables(); updateStartButton(); });
-  $('clearBtn').addEventListener('click', () => { state.tables.clear(); renderTables(); updateStartButton(); });
-  $('startBtn').addEventListener('click', startGame);
-  $('againBtn').addEventListener('click', startGame);
-  $('menuBtn').addEventListener('click', () => { renderBest(); show('menu'); });
-
   function bestKey() {
-    return 'tt-best-' + [...state.tables].sort((a,b)=>a-b).join(',') + '-' + state.total + (state.timed ? '-t' : '');
+    return 'tt-best-' + (state.child ? state.child.id : 'guest') + '-' +
+      [...state.tables].sort((a,b)=>a-b).join(',') + '-' + state.total + (state.timed ? '-t' : '');
   }
   function getBest() {
     try { return parseInt(localStorage.getItem(bestKey()) || '-1', 10); } catch(e) { return -1; }
@@ -250,32 +404,86 @@
     $('bestLine').textContent = b >= 0 ? `Best for these settings: ${b} / ${state.total}` : '';
   }
 
-  // ---------- Game setup ----------
-  function buildQuestions() {
-    const pool = [];
-    const tables = [...state.tables];
-    tables.forEach(a => {
-      for (let b = 2; b <= 12; b++) pool.push([a, b]);
+  // ---------- Fact stats and practice selection ----------
+  const pairKey = (a, b) => `${Math.min(a,b)}x${Math.max(a,b)}`;
+
+  async function loadFactStats() {
+    state.factStats = {};
+    if (!state.child || !sb) {
+      $('practiceHint').textContent = '';
+      return;
+    }
+    const { data, error } = await sb.from('fact_stats')
+      .select('factor_a,factor_b,total,misses')
+      .eq('child_id', state.child.id);
+    if (error) {
+      $('practiceHint').textContent = 'Could not load past results. Playing with random practice.';
+      return;
+    }
+    data.forEach(r => {
+      const k = pairKey(r.factor_a, r.factor_b);
+      const s = state.factStats[k] || { total: 0, misses: 0 };
+      s.total += Number(r.total);
+      s.misses += Number(r.misses);
+      state.factStats[k] = s;
     });
-    // Shuffle pool and draw questions, avoiding repeats until the pool runs out
-    shuffle(pool);
+    const tracked = Object.keys(state.factStats).length;
+    $('practiceHint').textContent = tracked
+      ? `Practice focuses on the facts ${state.child.name} misses most.`
+      : `Answers will be saved so the game can focus on tricky facts.`;
+  }
+
+  // Higher weight = asked more often
+  function weightFor(key) {
+    const s = state.factStats[key];
+    if (!s) return 2;                       // never tried: keep it in the mix
+    if (s.total >= 3 && s.misses === 0) return 0.4; // reliably known
+    return 1 + s.misses * 2 + (s.misses / s.total) * 4;
+  }
+
+  function buildQuestions() {
+    // Unique facts (order-independent) for the chosen tables
+    const seen = new Set();
+    const candidates = [];
+    [...state.tables].forEach(a => {
+      for (let b = 2; b <= 12; b++) {
+        const k = pairKey(a, b);
+        if (!seen.has(k)) { seen.add(k); candidates.push({ key: k, a, b, w: weightFor(k) }); }
+      }
+    });
+
     const qs = [];
     for (let i = 0; i < state.total; i++) {
-      const [a, b] = pool[i % pool.length];
-      // randomly swap order so 7×8 and 8×7 both appear
-      qs.push(Math.random() < .5 ? [a, b] : [b, a]);
+      const total = candidates.reduce((sum, c) => sum + c.w, 0);
+      let r = Math.random() * total;
+      let pick = candidates[candidates.length - 1];
+      for (const c of candidates) {
+        r -= c.w;
+        if (r <= 0) { pick = c; break; }
+      }
+      // Make the picked fact less likely to repeat right away
+      pick.w *= 0.15;
+      // Randomly flip order so 7×8 and 8×7 both appear
+      qs.push(Math.random() < .5 ? [pick.a, pick.b] : [pick.b, pick.a]);
     }
     return qs;
   }
 
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+  // ---------- Saving answers ----------
+  function recordAttempt(a, b, correct, responseMs) {
+    if (!state.child || !sb) return;
+    sb.from('attempts').insert({
+      child_id: state.child.id,
+      factor_a: a,
+      factor_b: b,
+      correct,
+      response_ms: responseMs,
+    }).then(({ error }) => {
+      if (error) console.warn('Could not save answer:', error.message);
+    });
   }
 
+  // ---------- Game setup ----------
   function startGame() {
     if (state.tables.size === 0) return;
     state.questions = buildQuestions();
@@ -292,8 +500,7 @@
   function buildKeypad() {
     const kp = $('keypad');
     kp.innerHTML = '';
-    const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
-    keys.forEach(k => {
+    ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(k => {
       const b = document.createElement('button');
       b.className = 'key' + (k === '✓' ? ' action' : k === '⌫' ? ' clear' : '');
       b.textContent = k;
@@ -317,13 +524,12 @@
     $('answerBox').textContent = state.answer;
   }
 
-  // Keyboard support (handy when testing on a laptop)
+  // Keyboard support for testing on a laptop
   document.addEventListener('keydown', e => {
-    if ($('game').classList.contains('active')) {
-      if (/^[0-9]$/.test(e.key)) press(e.key);
-      else if (e.key === 'Backspace') press('⌫');
-      else if (e.key === 'Enter') press('✓');
-    }
+    if (!$('game').classList.contains('active')) return;
+    if (/^[0-9]$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace') press('⌫');
+    else if (e.key === 'Enter') press('✓');
   });
 
   // ---------- Question flow ----------
@@ -341,11 +547,11 @@
     $('scoreText').textContent = state.score;
     $('streakText').textContent = state.streak;
     $('progressBar').style.width = (state.index / state.total * 100) + '%';
+    state.questionStart = Date.now();
     if (state.timed) startTimer();
   }
 
   function startTimer() {
-    state.timeLeft = TIME_LIMIT * 1000;
     const start = Date.now();
     const fill = $('timerFill');
     fill.style.width = '100%';
@@ -369,12 +575,12 @@
     state.locked = true;
     const [a, b] = state.questions[state.index];
     state.streak = 0;
+    recordAttempt(a, b, false, null);
     $('answerBox').className = 'answer-box bad';
     $('answerBox').textContent = a * b;
     $('feedback').textContent = `Time's up! It's ${a * b}`;
     $('feedback').className = 'feedback bad';
-    $('questionCard').classList.add('shake');
-    setTimeout(() => $('questionCard').classList.remove('shake'), 400);
+    shake();
     advanceAfter(1800);
   }
 
@@ -383,30 +589,41 @@
     clearTimer();
     state.locked = true;
     const [a, b] = state.questions[state.index];
-    const correct = a * b;
+    const correctAnswer = a * b;
     const given = parseInt(state.answer, 10);
+    const responseMs = Date.now() - state.questionStart;
+    const correct = given === correctAnswer;
 
-    if (given === correct) {
+    recordAttempt(a, b, correct, responseMs);
+
+    if (correct) {
       state.score++;
       state.streak++;
       state.bestStreak = Math.max(state.bestStreak, state.streak);
       $('answerBox').className = 'answer-box good';
       $('feedback').textContent = praise(state.streak);
       $('feedback').className = 'feedback good';
-      $('questionCard').classList.add('pop');
-      setTimeout(() => $('questionCard').classList.remove('pop'), 400);
+      pop();
       advanceAfter(900);
     } else {
       state.streak = 0;
       $('answerBox').className = 'answer-box bad';
-      $('feedback').textContent = `Not quite. ${a} × ${b} = ${correct}`;
+      $('feedback').textContent = `Not quite. ${a} × ${b} = ${correctAnswer}`;
       $('feedback').className = 'feedback bad';
-      $('questionCard').classList.add('shake');
-      setTimeout(() => $('questionCard').classList.remove('shake'), 400);
+      shake();
       advanceAfter(2000);
     }
     $('scoreText').textContent = state.score;
     $('streakText').textContent = state.streak;
+  }
+
+  function shake() {
+    $('questionCard').classList.add('shake');
+    setTimeout(() => $('questionCard').classList.remove('shake'), 400);
+  }
+  function pop() {
+    $('questionCard').classList.add('pop');
+    setTimeout(() => $('questionCard').classList.remove('pop'), 400);
   }
 
   function praise(streak) {
@@ -430,10 +647,10 @@
     clearTimer();
     const pct = state.score / state.total;
     let emoji, title, msg, stars;
-    if (pct === 1)       { emoji = '🏆'; title = 'Perfect!';      msg = 'Every single one right. Legendary!'; stars = 3; }
-    else if (pct >= .8)  { emoji = '🎉'; title = 'Awesome!';      msg = 'So close to perfect. Great work!'; stars = 3; }
-    else if (pct >= .5)  { emoji = '👍'; title = 'Good job!';     msg = 'Solid practice. Try again to beat it!'; stars = 2; }
-    else                 { emoji = '💪'; title = 'Keep practicing!'; msg = 'Practice makes perfect. Give it another go!'; stars = 1; }
+    if (pct === 1)      { emoji = '🏆'; title = 'Perfect!';        msg = 'Every single one right. Legendary!'; stars = 3; }
+    else if (pct >= .8) { emoji = '🎉'; title = 'Awesome!';        msg = 'So close to perfect. Great work!'; stars = 3; }
+    else if (pct >= .5) { emoji = '👍'; title = 'Good job!';       msg = 'Solid practice. Try again to beat it!'; stars = 2; }
+    else                { emoji = '💪'; title = 'Keep practicing!'; msg = 'Practice makes perfect. Give it another go!'; stars = 1; }
 
     const prevBest = getBest();
     const isNewBest = state.score > prevBest;
@@ -444,19 +661,46 @@
     $('finalScore').textContent = `${state.score} / ${state.total}`;
     $('finalStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
     $('resultMsg').textContent = msg + (state.bestStreak ? ` Best streak: ${state.bestStreak}.` : '');
-    $('bestResult').textContent = isNewBest && prevBest >= 0 ? '🎊 New best score!' : (isNewBest ? '🎊 First score saved!' : `Best: ${getBest()} / ${state.total}`);
+    $('bestResult').textContent = isNewBest && prevBest >= 0 ? '🎊 New best score!'
+      : (isNewBest ? '🎊 First score saved!' : `Best: ${getBest()} / ${state.total}`);
     $('progressBar').style.width = '100%';
     show('results');
   }
 
+  // ---------- Wire up buttons ----------
+  $('signinBtn').addEventListener('click', signIn);
+  $('signupBtn').addEventListener('click', signUp);
+  $('guestBtn').addEventListener('click', playAsGuest);
+  $('password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+  $('addChildBtn').addEventListener('click', addChild);
+  $('newChildName').addEventListener('keydown', e => { if (e.key === 'Enter') addChild(); });
+  $('signOutBtn').addEventListener('click', signOut);
+  $('switchBtn').addEventListener('click', () => {
+    if (state.user) goToChildren();
+    else show('auth');
+  });
+  $('allBtn').addEventListener('click', () => { state.tables = new Set(ALL_TABLES); renderTables(); updateStartButton(); });
+  $('clearBtn').addEventListener('click', () => { state.tables.clear(); renderTables(); updateStartButton(); });
+  $('startBtn').addEventListener('click', startGame);
+  $('againBtn').addEventListener('click', startGame);
+  $('menuBtn').addEventListener('click', goToMenu);
+
   // ---------- Init ----------
-  renderTables();
   buildKeypad();
-  updateStartButton();
-  renderBest();
-  // Prevent iPad double-tap zoom and pinch
   document.addEventListener('gesturestart', e => e.preventDefault());
   document.addEventListener('dblclick', e => e.preventDefault());
+
+  (async () => {
+    if (!sb) {
+      setMsg($('authMsg'), 'Could not load the account service. You can still play as a guest.');
+      return;
+    }
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      state.user = session.user;
+      goToChildren();
+    }
+  })();
 })();
 </script>
 </body>
