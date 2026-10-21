@@ -96,6 +96,13 @@
   .key:active { transform: translateY(3px); box-shadow: 0 2px 0 #26335f; }
   .key.action { background: var(--good); box-shadow: 0 5px 0 #2a8a5a; }
   .key.clear { background: #8a7bd6; box-shadow: 0 5px 0 #5f52a3; }
+  .key, .check-btn { touch-action: manipulation; }
+  .check-btn {
+    width: 100%; max-width: 640px; margin-top: 14px; font-size: 36px; font-weight: 800; padding: 22px 0;
+    border: none; border-radius: 20px; background: var(--good); color: #fff; cursor: pointer;
+    box-shadow: 0 5px 0 #2a8a5a;
+  }
+  .check-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2a8a5a; }
   .result { text-align: center; color: #fff; }
   .result .big { font-size: 110px; }
   .result .score { font-size: 60px; font-weight: 800; color: var(--gold); margin: 6px 0; }
@@ -192,6 +199,7 @@
   </div>
 
   <div class="keypad" id="keypad"></div>
+  <button class="check-btn" id="checkBtn">✓ Check</button>
 </section>
 
 <!-- ============ RESULTS ============ -->
@@ -490,12 +498,23 @@
   function buildKeypad() {
     const kp = $('keypad');
     kp.innerHTML = '';
-    ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(k => {
+    ['1','2','3','4','5','6','7','8','9','⌫','0'].forEach(k => {
       const b = document.createElement('button');
-      b.className = 'key' + (k === '✓' ? ' action' : k === '⌫' ? ' clear' : '');
+      b.className = 'key' + (k === '⌫' ? ' clear' : '');
       b.textContent = k;
-      b.addEventListener('pointerdown', e => { e.preventDefault(); press(k); });
+      attachTap(b, () => press(k));
       kp.appendChild(b);
+    });
+    attachTap($('checkBtn'), () => press('✓'));
+  }
+
+  // A key counts only when the finger lifts while still over it.
+  // This ignores a finger that slides off a key, and a stray touch that lands on a neighbouring key.
+  function attachTap(el, action) {
+    el.addEventListener('pointerdown', e => e.preventDefault());
+    el.addEventListener('pointerup', e => {
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      if (under && (under === el || el.contains(under))) action();
     });
   }
 
