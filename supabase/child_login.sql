@@ -1,11 +1,16 @@
 -- Child username/password login. Run this once in the Supabase SQL Editor.
--- Replaces the earlier parent-account schema. The old tables are empty, so they're dropped here.
+-- Nothing is dropped. The earlier parent-account tables (empty) are renamed with an _old suffix.
 
 create extension if not exists pgcrypto with schema extensions;
 
-drop view if exists public.fact_stats;
-drop table if exists public.attempts;
-drop table if exists public.children;
+-- Move the old, empty tables and their names out of the way
+alter view if exists public.fact_stats rename to fact_stats_old;
+alter table if exists public.attempts rename to attempts_old;
+alter table if exists public.children rename to children_old;
+alter index if exists public.attempts_pkey rename to attempts_old_pkey;
+alter index if exists public.attempts_child_fact_idx rename to attempts_old_child_fact_idx;
+alter index if exists public.children_pkey rename to children_old_pkey;
+alter sequence if exists public.attempts_id_seq rename to attempts_old_id_seq;
 
 create table public.children (
   id uuid primary key default gen_random_uuid(),
