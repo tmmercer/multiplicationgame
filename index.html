@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Times Tables">
+<title>Times Tables Practice</title>
+<style>
+  :root {
+    --bg: #1e2a52;
+    --card: #ffffff;
+    --ink: #1d2340;
+    --accent: #ff7a59;
+    --good: #3fbf7f;
+    --bad: #ff5c6c;
+    --gold: #ffc542;
+    --key: #3b4a86;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(circle at top, #2c3d75, var(--bg) 70%);
+    color: var(--ink);
+    overscroll-behavior: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  .screen { display: none; min-height: 100%; padding: 24px; flex-direction: column; align-items: center; }
+  .screen.active { display: flex; }
+  h1 { color: #fff; font-size: 44px; margin: 16px 0 8px; text-align: center; }
+  .sub { color: #cfd6f5; font-size: 20px; margin-bottom: 24px; text-align: center; }
+  .card {
+    background: var(--card); border-radius: 28px; padding: 28px;
+    width: 100%; max-width: 640px; box-shadow: 0 12px 30px rgba(0,0,0,.25);
+  }
+  .card h2 { margin: 0 0 16px; font-size: 26px; }
+  .tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 12px; }
+  .chip {
+    font-size: 26px; font-weight: 700; padding: 18px 0; border-radius: 18px; border: 3px solid #d8dcf0;
+    background: #f4f6ff; color: var(--ink); cursor: pointer; text-align: center;
+  }
+  .chip.on { background: var(--good); border-color: var(--good); color: #fff; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+  .btn {
+    flex: 1; min-width: 180px; font-size: 28px; font-weight: 800; padding: 22px 24px;
+    border: none; border-radius: 22px; background: var(--accent); color: #fff; cursor: pointer;
+    box-shadow: 0 6px 0 #c9553a; transition: transform .05s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9553a; }
+  .btn.alt { background: #6c7fd6; box-shadow: 0 6px 0 #4a5ca8; }
+  .btn.alt:active { box-shadow: 0 2px 0 #4a5ca8; }
+  .stats { color: #fff; display: flex; justify-content: space-between; width: 100%; max-width: 640px; margin-bottom: 12px; font-size: 22px; font-weight: 700; }
+  .progress { width: 100%; max-width: 640px; height: 14px; background: rgba(255,255,255,.2); border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
+  .progress > div { height: 100%; background: var(--gold); width: 0; transition: width .3s; }
+  .question {
+    width: 100%; max-width: 640px; background: var(--card); border-radius: 28px; padding: 24px 20px;
+    text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.25); transition: transform .2s;
+  }
+  .question.shake { animation: shake .4s; }
+  .question.pop { animation: pop .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-14px)} 40%{transform:translateX(14px)} 60%{transform:translateX(-10px)} 80%{transform:translateX(8px)} }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.05)} 100%{transform:scale(1)} }
+  .prompt { font-size: 84px; font-weight: 800; line-height: 1.1; }
+  .answer-box {
+    margin: 12px auto 0; height: 92px; width: 60%; max-width: 280px; border-radius: 20px;
+    background: #eef1fb; border: 3px solid #d0d7f0; font-size: 60px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; color: var(--ink);
+  }
+  .answer-box.good { background: #d9f7e8; border-color: var(--good); }
+  .answer-box.bad { background: #ffe0e4; border-color: var(--bad); }
+  .feedback { min-height: 32px; font-size: 26px; font-weight: 700; margin-top: 10px; }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+  .keypad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    width: 100%; max-width: 640px; margin-top: 18px;
+  }
+  .key {
+    font-size: 40px; font-weight: 800; padding: 20px 0; border: none; border-radius: 20px;
+    background: var(--key); color: #fff; cursor: pointer; box-shadow: 0 5px 0 #26335f;
+  }
+  .key:active { transform: translateY(3px); box-shadow: 0 2px 0 #26335f; }
+  .key.wide { grid-column: span 2; }
+  .key.action { background: var(--good); box-shadow: 0 5px 0 #2a8a5a; }
+  .key.clear { background: #8a7bd6; box-shadow: 0 5px 0 #5f52a3; }
+  .result { text-align: center; color: #fff; }
+  .result .big { font-size: 110px; }
+  .result .score { font-size: 60px; font-weight: 800; color: var(--gold); margin: 6px 0; }
+  .result p { font-size: 24px; }
+  .stars { font-size: 70px; letter-spacing: 6px; }
+  .toggle-row { display:flex; gap:12px; margin-top: 18px; }
+  .toggle { flex:1; font-size:22px; font-weight:700; padding:16px; border-radius:16px; border:3px solid #d8dcf0; background:#f4f6ff; cursor:pointer; text-align:center; color: var(--ink); }
+  .toggle.on { background: #6c7fd6; border-color: #6c7fd6; color:#fff; }
+  .best { color:#cfd6f5; font-size:20px; margin-top: 14px; text-align:center; }
+  .hint { color:#cfd6f5; font-size:18px; margin-top:12px; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ============ MENU ============ -->
+<section id="menu" class="screen active">
+  <h1>Times Tables</h1>
+  <div class="sub">Pick your tables, then tap Start!</div>
+
+  <div class="card">
+    <h2>Which tables?</h2>
+    <div class="tables" id="tableChoices"></div>
+    <div class="row">
+      <button class="btn alt" id="allBtn">All 2–12</button>
+      <button class="btn alt" id="clearBtn">Clear</button>
+    </div>
+
+    <h2 style="margin-top:28px">How many questions?</h2>
+    <div class="toggle-row" id="lengthChoices">
+      <div class="toggle" data-n="10">10</div>
+      <div class="toggle on" data-n="20">20</div>
+      <div class="toggle" data-n="30">30</div>
+    </div>
+
+    <h2 style="margin-top:28px">Mode</h2>
+    <div class="toggle-row" id="modeChoices">
+      <div class="toggle on" data-m="normal">Normal</div>
+      <div class="toggle" data-m="timed">Timed (8 sec)</div>
+    </div>
+  </div>
+
+  <div class="row" style="max-width:640px;width:100%">
+    <button class="btn" id="startBtn">Start!</button>
+  </div>
+  <div class="best" id="bestLine"></div>
+  <div class="hint">Tip: Add to Home Screen from Safari to play full-screen.</div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="game" class="screen">
+  <div class="stats">
+    <span id="progressText">1 / 20</span>
+    <span>⭐ <span id="scoreText">0</span></span>
+    <span>🔥 <span id="streakText">0</span></span>
+  </div>
+  <div class="progress"><div id="progressBar"></div></div>
+
+  <div class="question" id="questionCard">
+    <div class="prompt" id="prompt">7 × 8</div>
+    <div class="answer-box" id="answerBox"></div>
+    <div class="feedback" id="feedback"></div>
+    <div id="timerBar" style="height:10px;border-radius:6px;background:#e5e9f7;margin-top:10px;overflow:hidden;display:none">
+      <div id="timerFill" style="height:100%;width:100%;background:var(--accent)"></div>
+    </div>
+  </div>
+
+  <div class="keypad" id="keypad"></div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section id="results" class="screen">
+  <div class="result">
+    <div class="big" id="resultEmoji">🎉</div>
+    <h1 id="resultTitle">Great job!</h1>
+    <div class="score" id="finalScore">0 / 20</div>
+    <div class="stars" id="finalStars">⭐⭐⭐</div>
+    <p id="resultMsg"></p>
+    <p id="bestResult"></p>
+  </div>
+  <div class="row" style="max-width:640px;width:100%">
+    <button class="btn" id="againBtn">Play again</button>
+    <button class="btn alt" id="menuBtn">Change tables</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  // ---------- State ----------
+  const ALL_TABLES = [2,3,4,5,6,7,8,9,10,11,12];
+  const state = {
+    tables: new Set([2,3,4,5,6,7,8,9,10,11,12]),
+    total: 20,
+    timed: false,
+    questions: [],
+    index: 0,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    answer: '',
+    locked: false,
+    timer: null,
+    timeLeft: 0,
+  };
+  const TIME_LIMIT = 8; // seconds in timed mode
+  const $ = id => document.getElementById(id);
+  const screens = ['menu','game','results'];
+
+  function show(name) {
+    screens.forEach(s => $(s).classList.toggle('active', s === name));
+  }
+
+  // ---------- Menu ----------
+  function renderTables() {
+    const box = $('tableChoices');
+    box.innerHTML = '';
+    ALL_TABLES.forEach(n => {
+      const b = document.createElement('div');
+      b.className = 'chip' + (state.tables.has(n) ? ' on' : '');
+      b.textContent = '×' + n;
+      b.addEventListener('click', () => {
+        state.tables.has(n) ? state.tables.delete(n) : state.tables.add(n);
+        renderTables();
+        updateStartButton();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function updateStartButton() {
+    $('startBtn').disabled = state.tables.size === 0;
+    $('startBtn').style.opacity = state.tables.size === 0 ? .5 : 1;
+  }
+
+  function selectGroup(containerId, attr, onPick) {
+    $(containerId).querySelectorAll('.toggle').forEach(t => {
+      t.addEventListener('click', () => {
+        $(containerId).querySelectorAll('.toggle').forEach(x => x.classList.remove('on'));
+        t.classList.add('on');
+        onPick(t.dataset[attr]);
+      });
+    });
+  }
+
+  selectGroup('lengthChoices', 'n', v => state.total = parseInt(v, 10));
+  selectGroup('modeChoices', 'm', v => state.timed = (v === 'timed'));
+
+  $('allBtn').addEventListener('click', () => { state.tables = new Set(ALL_TABLES); renderTables(); updateStartButton(); });
+  $('clearBtn').addEventListener('click', () => { state.tables.clear(); renderTables(); updateStartButton(); });
+  $('startBtn').addEventListener('click', startGame);
+  $('againBtn').addEventListener('click', startGame);
+  $('menuBtn').addEventListener('click', () => { renderBest(); show('menu'); });
+
+  function bestKey() {
+    return 'tt-best-' + [...state.tables].sort((a,b)=>a-b).join(',') + '-' + state.total + (state.timed ? '-t' : '');
+  }
+  function getBest() {
+    try { return parseInt(localStorage.getItem(bestKey()) || '-1', 10); } catch(e) { return -1; }
+  }
+  function setBest(score) {
+    try { localStorage.setItem(bestKey(), String(score)); } catch(e) {}
+  }
+  function renderBest() {
+    const b = getBest();
+    $('bestLine').textContent = b >= 0 ? `Best for these settings: ${b} / ${state.total}` : '';
+  }
+
+  // ---------- Game setup ----------
+  function buildQuestions() {
+    const pool = [];
+    const tables = [...state.tables];
+    tables.forEach(a => {
+      for (let b = 2; b <= 12; b++) pool.push([a, b]);
+    });
+    // Shuffle pool and draw questions, avoiding repeats until the pool runs out
+    shuffle(pool);
+    const qs = [];
+    for (let i = 0; i < state.total; i++) {
+      const [a, b] = pool[i % pool.length];
+      // randomly swap order so 7×8 and 8×7 both appear
+      qs.push(Math.random() < .5 ? [a, b] : [b, a]);
+    }
+    return qs;
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function startGame() {
+    if (state.tables.size === 0) return;
+    state.questions = buildQuestions();
+    state.index = 0;
+    state.score = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
+    $('timerBar').style.display = state.timed ? 'block' : 'none';
+    show('game');
+    loadQuestion();
+  }
+
+  // ---------- Keypad ----------
+  function buildKeypad() {
+    const kp = $('keypad');
+    kp.innerHTML = '';
+    const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+    keys.forEach(k => {
+      const b = document.createElement('button');
+      b.className = 'key' + (k === '✓' ? ' action' : k === '⌫' ? ' clear' : '');
+      b.textContent = k;
+      b.addEventListener('pointerdown', e => { e.preventDefault(); press(k); });
+      kp.appendChild(b);
+    });
+  }
+
+  function press(k) {
+    if (state.locked) return;
+    if (k === '⌫') {
+      state.answer = state.answer.slice(0, -1);
+    } else if (k === '✓') {
+      submit();
+      return;
+    } else {
+      if (state.answer.length >= 3) return;
+      if (state.answer === '0') state.answer = '';
+      state.answer += k;
+    }
+    $('answerBox').textContent = state.answer;
+  }
+
+  // Keyboard support (handy when testing on a laptop)
+  document.addEventListener('keydown', e => {
+    if ($('game').classList.contains('active')) {
+      if (/^[0-9]$/.test(e.key)) press(e.key);
+      else if (e.key === 'Backspace') press('⌫');
+      else if (e.key === 'Enter') press('✓');
+    }
+  });
+
+  // ---------- Question flow ----------
+  function loadQuestion() {
+    clearTimer();
+    state.answer = '';
+    state.locked = false;
+    const [a, b] = state.questions[state.index];
+    $('prompt').textContent = `${a} × ${b}`;
+    $('answerBox').textContent = '';
+    $('answerBox').className = 'answer-box';
+    $('feedback').textContent = '';
+    $('feedback').className = 'feedback';
+    $('progressText').textContent = `${state.index + 1} / ${state.total}`;
+    $('scoreText').textContent = state.score;
+    $('streakText').textContent = state.streak;
+    $('progressBar').style.width = (state.index / state.total * 100) + '%';
+    if (state.timed) startTimer();
+  }
+
+  function startTimer() {
+    state.timeLeft = TIME_LIMIT * 1000;
+    const start = Date.now();
+    const fill = $('timerFill');
+    fill.style.width = '100%';
+    state.timer = setInterval(() => {
+      const left = TIME_LIMIT * 1000 - (Date.now() - start);
+      fill.style.width = Math.max(0, left / (TIME_LIMIT * 1000) * 100) + '%';
+      fill.style.background = left < 3000 ? 'var(--bad)' : 'var(--accent)';
+      if (left <= 0) {
+        clearTimer();
+        timeUp();
+      }
+    }, 50);
+  }
+
+  function clearTimer() {
+    if (state.timer) { clearInterval(state.timer); state.timer = null; }
+  }
+
+  function timeUp() {
+    if (state.locked) return;
+    state.locked = true;
+    const [a, b] = state.questions[state.index];
+    state.streak = 0;
+    $('answerBox').className = 'answer-box bad';
+    $('answerBox').textContent = a * b;
+    $('feedback').textContent = `Time's up! It's ${a * b}`;
+    $('feedback').className = 'feedback bad';
+    $('questionCard').classList.add('shake');
+    setTimeout(() => $('questionCard').classList.remove('shake'), 400);
+    advanceAfter(1800);
+  }
+
+  function submit() {
+    if (state.locked || state.answer === '') return;
+    clearTimer();
+    state.locked = true;
+    const [a, b] = state.questions[state.index];
+    const correct = a * b;
+    const given = parseInt(state.answer, 10);
+
+    if (given === correct) {
+      state.score++;
+      state.streak++;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+      $('answerBox').className = 'answer-box good';
+      $('feedback').textContent = praise(state.streak);
+      $('feedback').className = 'feedback good';
+      $('questionCard').classList.add('pop');
+      setTimeout(() => $('questionCard').classList.remove('pop'), 400);
+      advanceAfter(900);
+    } else {
+      state.streak = 0;
+      $('answerBox').className = 'answer-box bad';
+      $('feedback').textContent = `Not quite. ${a} × ${b} = ${correct}`;
+      $('feedback').className = 'feedback bad';
+      $('questionCard').classList.add('shake');
+      setTimeout(() => $('questionCard').classList.remove('shake'), 400);
+      advanceAfter(2000);
+    }
+    $('scoreText').textContent = state.score;
+    $('streakText').textContent = state.streak;
+  }
+
+  function praise(streak) {
+    if (streak >= 10) return '🔥 On fire! Amazing!';
+    if (streak >= 5) return '🚀 Super streak!';
+    if (streak >= 3) return '🌟 Keep going!';
+    const msgs = ['Correct! 🎉', 'Nice! 👍', 'Yes! ✨', 'You got it! 🙌'];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+
+  function advanceAfter(ms) {
+    setTimeout(() => {
+      state.index++;
+      if (state.index >= state.total) finish();
+      else loadQuestion();
+    }, ms);
+  }
+
+  // ---------- Results ----------
+  function finish() {
+    clearTimer();
+    const pct = state.score / state.total;
+    let emoji, title, msg, stars;
+    if (pct === 1)       { emoji = '🏆'; title = 'Perfect!';      msg = 'Every single one right. Legendary!'; stars = 3; }
+    else if (pct >= .8)  { emoji = '🎉'; title = 'Awesome!';      msg = 'So close to perfect. Great work!'; stars = 3; }
+    else if (pct >= .5)  { emoji = '👍'; title = 'Good job!';     msg = 'Solid practice. Try again to beat it!'; stars = 2; }
+    else                 { emoji = '💪'; title = 'Keep practicing!'; msg = 'Practice makes perfect. Give it another go!'; stars = 1; }
+
+    const prevBest = getBest();
+    const isNewBest = state.score > prevBest;
+    if (isNewBest) setBest(state.score);
+
+    $('resultEmoji').textContent = emoji;
+    $('resultTitle').textContent = title;
+    $('finalScore').textContent = `${state.score} / ${state.total}`;
+    $('finalStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    $('resultMsg').textContent = msg + (state.bestStreak ? ` Best streak: ${state.bestStreak}.` : '');
+    $('bestResult').textContent = isNewBest && prevBest >= 0 ? '🎊 New best score!' : (isNewBest ? '🎊 First score saved!' : `Best: ${getBest()} / ${state.total}`);
+    $('progressBar').style.width = '100%';
+    show('results');
+  }
+
+  // ---------- Init ----------
+  renderTables();
+  buildKeypad();
+  updateStartButton();
+  renderBest();
+  // Prevent iPad double-tap zoom and pinch
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+})();
+</script>
+</body>
+</html>
